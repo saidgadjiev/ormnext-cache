@@ -3,8 +3,10 @@ package ru.saidgajiev.ormnext.cache;
 import ru.saidgadjiev.ormnext.core.cache.Cache;
 import ru.saidgadjiev.ormnext.core.cache.CacheEvict;
 import ru.saidgadjiev.ormnext.core.cache.ObjectCache;
+import ru.saidgadjiev.ormnext.core.connection.DatabaseResults;
 import ru.saidgadjiev.ormnext.core.dao.DatabaseEngine;
 import ru.saidgadjiev.ormnext.core.query.criteria.impl.DeleteStatement;
+import ru.saidgadjiev.ormnext.core.query.criteria.impl.Query;
 import ru.saidgadjiev.ormnext.core.query.criteria.impl.SelectStatement;
 import ru.saidgadjiev.ormnext.core.query.criteria.impl.UpdateStatement;
 import ru.saidgadjiev.ormnext.core.table.internal.metamodel.MetaModel;
@@ -174,5 +176,15 @@ public class PolicyLayer implements Cache {
     @Override
     public void close() {
         cache.close();
+    }
+
+    @Override
+    public Optional<DatabaseResults> query(Query query) {
+        return cache.query(query);
+    }
+
+    @Override
+    public void cacheQuery(Query query, DatabaseResults databaseResults) {
+        cache.cacheQuery(query, databaseResults);
     }
 }

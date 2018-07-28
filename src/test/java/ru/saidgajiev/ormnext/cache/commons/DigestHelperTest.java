@@ -18,7 +18,7 @@ public class DigestHelperTest {
     public void digest() throws Exception {
         MetaModel metaModel = new MetaModel(Arrays.asList(TestEntity1.class, TestEntity2.class));
 
-        metaModel.init(null);
+        metaModel.init();
         DigestHelper helper = new DigestHelper(metaModel, new DefaultDatabaseEngine(new H2Dialect()));
 
         Assert.assertEquals(
@@ -35,7 +35,7 @@ public class DigestHelperTest {
     public void digestByEqualCriteria() throws Exception {
         MetaModel metaModel = new MetaModel(Arrays.asList(TestEntity1.class, TestEntity2.class));
 
-        metaModel.init(null);
+        metaModel.init();
         DigestHelper helper = new DigestHelper(metaModel, new DefaultDatabaseEngine(new H2Dialect()));
 
         SelectStatement<TestEntity1> selectStatement1 = new SelectStatement<>(TestEntity1.class);
@@ -60,7 +60,7 @@ public class DigestHelperTest {
     public void digestByEqualUserProvidedArgs() throws Exception {
         MetaModel metaModel = new MetaModel(Arrays.asList(TestEntity1.class, TestEntity2.class));
 
-        metaModel.init(null);
+        metaModel.init();
         DigestHelper helper = new DigestHelper(metaModel, new DefaultDatabaseEngine(new H2Dialect()));
 
         SelectStatement<TestEntity1> selectStatement1 = new SelectStatement<>(TestEntity1.class);
