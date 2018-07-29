@@ -282,8 +282,7 @@
         <dependency>
             <groupId>ru.saidgadjiev.ormnext</groupId>
             <artifactId>ormnext-core</artifactId>
-            <version>1.8-SNAPSHOT</version>
-            <scope>provided</scope>
+            <version>1.9</version>
         </dependency>
 
         <dependency>
@@ -292,7 +291,6 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 </project>
