@@ -19,9 +19,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/saidgadjiev/ormnext-support</connection>
-        <developerConnection>scm:git:https://github.com/saidgadjiev/ormnext-support</developerConnection>
-        <url>https://github.com/saidgadjiev/ormnext-support</url>
+        <connection>scm:git:https://github.com/saidgadjiev/ormnext-cache</connection>
+        <developerConnection>scm:git:https://github.com/saidgadjiev/ormnext-cache</developerConnection>
+        <url>https://github.com/saidgadjiev/ormnext-cache</url>
         <tag>ormnext-cache-1.0</tag>
     </scm>
 
