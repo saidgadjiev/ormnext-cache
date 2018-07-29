@@ -2,23 +2,52 @@ package ru.saidgajiev.ormnext.cache;
 
 import ru.saidgadjiev.ormnext.core.cache.CacheEvict;
 import ru.saidgadjiev.ormnext.core.cache.ObjectCache;
-import ru.saidgadjiev.ormnext.core.query.criteria.impl.SelectStatement;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Evict api implementation.
+ *
+ * @author Said Gadjiev
+ */
 public class EvictHelper implements CacheEvict {
 
-    private final Map<Class<?>, ObjectCache> objectCacheMap;
+    /**
+     * Object cache map.
+     */
+    private Map<Class<?>, ObjectCache> objectCacheMap = new HashMap<>();
 
-    private final Map<Class<?>, List<Object>> queryForAllCache;
+    /**
+     * Query for all results cache.
+     */
+    private Map<Class<?>, List<Object>> queryForAllCache = new HashMap<>();
 
-    private final Map<Class<?>, Long> countOffCache;
+    /**
+     * Count off results cache.
+     */
+    private Map<Class<?>, Long> countOffCache = new HashMap<>();
 
-    private final Map<Class<?>, Map<Object, Boolean>> existCache;
+    /**
+     * Exist results cache.
+     */
+    private Map<Class<?>, Map<Object, Boolean>> existCache = new HashMap<>();
 
-    private final SelectStatementCache selectStatementCache;
+    /**
+     * Select statement cache.
+     */
+    private SelectStatementCache selectStatementCache;
 
+    /**
+     * Create a new instance.
+     *
+     * @param objectCacheMap target object cache map
+     * @param queryForAllCache target query for all cache
+     * @param countOffCache target count off cache
+     * @param existCache target exist cache
+     * @param selectStatementCache target select statement cache
+     */
     EvictHelper(Map<Class<?>, ObjectCache> objectCacheMap,
                        Map<Class<?>, List<Object>> queryForAllCache,
                        Map<Class<?>, Long> countOffCache,
@@ -30,11 +59,6 @@ public class EvictHelper implements CacheEvict {
         this.countOffCache = countOffCache;
         this.existCache = existCache;
         this.selectStatementCache = selectStatementCache;
-    }
-
-    @Override
-    public void evictList(SelectStatement<?> selectStatement) {
-        selectStatementCache.evictList(selectStatement);
     }
 
     @Override
@@ -53,18 +77,8 @@ public class EvictHelper implements CacheEvict {
     }
 
     @Override
-    public void evictQueryForLong(SelectStatement<?> selectStatement) {
-        selectStatementCache.evictLong(selectStatement);
-    }
-
-    @Override
     public void evictQueryForLong() {
         selectStatementCache.evictLong();
-    }
-
-    @Override
-    public void evictUniqueResult(SelectStatement<?> selectStatement) {
-        selectStatementCache.evictUniqueResult(selectStatement);
     }
 
     @Override
@@ -105,11 +119,6 @@ public class EvictHelper implements CacheEvict {
     @Override
     public void evictQueryForAll() {
         queryForAllCache.clear();
-    }
-
-    @Override
-    public void evictLimitedList(SelectStatement<?> selectStatement) {
-        selectStatementCache.evictLimitedList(selectStatement);
     }
 
     @Override
@@ -159,10 +168,5 @@ public class EvictHelper implements CacheEvict {
         objectCacheMap.forEach((aClass, objectCache) -> objectCache.invalidateAll(aClass));
         countOffCache.clear();
         existCache.clear();
-    }
-
-    @Override
-    public ObjectCache getCache(Class<?> entityType) {
-        return objectCacheMap.get(entityType);
     }
 }

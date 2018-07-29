@@ -14,6 +14,11 @@ import ru.saidgadjiev.ormnext.core.table.internal.metamodel.MetaModel;
 
 import java.util.*;
 
+/**
+ * Cache layer.
+ *
+ * @author Said Gadjiev
+ */
 public class CacheLayer implements Cache {
 
     /**
@@ -26,14 +31,29 @@ public class CacheLayer implements Cache {
      */
     private Map<Class<?>, ObjectCache> objectCacheMap = new HashMap<>();
 
+    /**
+     * Query for all results cache.
+     */
     private Map<Class<?>, List<Object>> queryForAllCache = new HashMap<>();
 
+    /**
+     * Count off results cache.
+     */
     private Map<Class<?>, Long> countOffCache = new HashMap<>();
 
+    /**
+     * Exist results cache.
+     */
     private Map<Class<?>, Map<Object, Boolean>> existCache = new HashMap<>();
 
+    /**
+     * Select statement cache.
+     */
     private SelectStatementCache selectStatementCache;
 
+    /**
+     * Evict api.
+     */
     private CacheEvict cacheEvict;
 
     /**
@@ -70,6 +90,12 @@ public class CacheLayer implements Cache {
         putToCache(objects);
     }
 
+    /**
+     * Put objects to cache and return object ids.
+     *
+     * @param objects target objects.
+     * @return object ids
+     */
     private List<Object> putToCache(Collection<Object> objects) {
         if (objects.isEmpty()) {
             return Collections.emptyList();
@@ -298,7 +324,12 @@ public class CacheLayer implements Cache {
             Object id = selectStatementCache.getUniqueResult(selectStatement);
             ObjectCache objectCache = objectCacheMap.get(selectStatement.getEntityClass());
 
-            return id == null ? Optional.empty() : Optional.ofNullable(objectCache.get(selectStatement.getEntityClass(), id));
+            return id == null ? Optional.empty() : Optional.ofNullable(
+                    objectCache.get(
+                            selectStatement.getEntityClass(),
+                            id
+                    )
+            );
         }
 
         return Optional.empty();
@@ -332,6 +363,7 @@ public class CacheLayer implements Cache {
         }
     }
 
+    @Override
     public ObjectCache getCache(Class<?> entityType) {
         return objectCacheMap.get(entityType);
     }
@@ -356,6 +388,11 @@ public class CacheLayer implements Cache {
 
     }
 
+    /**
+     * Evict all caches by entity type.
+     *
+     * @param entityType target entity type
+     */
     private void evictCaches(Class<?> entityType) {
         evictApi().evictList(entityType);
         evictApi().evictLimitedList(entityType);
@@ -389,6 +426,12 @@ public class CacheLayer implements Cache {
         return cacheableEntities.contains(entityType);
     }
 
+    /**
+     * Return true if it is limited query.
+     *
+     * @param selectStatement target select statement
+     * @return true if it is limited query
+     */
     private boolean isLimitedQuery(SelectStatement<?> selectStatement) {
         return selectStatement.getLimit() != null;
     }

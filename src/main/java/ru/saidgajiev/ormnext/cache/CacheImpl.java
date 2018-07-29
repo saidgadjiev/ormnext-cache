@@ -22,10 +22,16 @@ import java.util.Optional;
  */
 public class CacheImpl implements Cache {
 
+    /**
+     * Cache proxy.
+     */
     private final Cache proxy;
 
+    /**
+     * Create a new instance.
+     */
     public CacheImpl() {
-        proxy = new PolicyLayer(new CacheLayer());
+        proxy = new CacheLayer();
     }
 
     @Override
@@ -161,6 +167,11 @@ public class CacheImpl implements Cache {
     @Override
     public void setCache(Class<?>[] entityTypes, ObjectCache objectCache) {
         proxy.setCache(entityTypes, objectCache);
+    }
+
+    @Override
+    public ObjectCache getCache(Class<?> aClass) {
+        return proxy.getCache(aClass);
     }
 
     @Override
