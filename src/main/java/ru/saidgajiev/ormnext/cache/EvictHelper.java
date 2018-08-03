@@ -82,16 +82,6 @@ public class EvictHelper implements CacheEvict {
     }
 
     @Override
-    public void evictUniqueResult(Class<?> entityType) {
-        selectStatementCache.evictUniqueResult(entityType);
-    }
-
-    @Override
-    public void evictUniqueResult() {
-        selectStatementCache.evictUniqueResult();
-    }
-
-    @Override
     public void evictCountOff(Class<?> entityType) {
         countOffCache.remove(entityType);
     }

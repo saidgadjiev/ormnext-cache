@@ -212,7 +212,6 @@ public class CacheLayer implements Cache {
             evictApi().evictList(entityType);
             evictApi().evictLimitedList(entityType);
             evictApi().evictQueryForLong(entityType);
-            evictApi().evictUniqueResult(entityType);
 
             objectCacheMap.get(o.getClass()).put(entityType, extractId(o), o);
         }
@@ -341,31 +340,6 @@ public class CacheLayer implements Cache {
     @Override
     public Optional<Long> queryForLong(SelectStatement<?> selectStatement) {
         return Optional.ofNullable(selectStatementCache.getLong(selectStatement));
-    }
-
-    @Override
-    public void cacheUniqueResult(SelectStatement<?> selectStatement, Object o) {
-        if (isCacheable(selectStatement.getEntityClass())) {
-            Object id = putToCache(Collections.singleton(o)).iterator().next();
-            selectStatementCache.putUniqueResult(selectStatement, id);
-        }
-    }
-
-    @Override
-    public Optional<Object> uniqueResult(SelectStatement<?> selectStatement) {
-        if (isCacheable(selectStatement.getEntityClass())) {
-            Object id = selectStatementCache.getUniqueResult(selectStatement);
-            ObjectCache objectCache = objectCacheMap.get(selectStatement.getEntityClass());
-
-            return id == null ? Optional.empty() : Optional.ofNullable(
-                    objectCache.get(
-                            selectStatement.getEntityClass(),
-                            id
-                    )
-            );
-        }
-
-        return Optional.empty();
     }
 
     @Override

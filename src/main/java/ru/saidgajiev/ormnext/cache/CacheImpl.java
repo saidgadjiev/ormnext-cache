@@ -145,16 +145,6 @@ public class CacheImpl implements Cache {
     }
 
     @Override
-    public void cacheUniqueResult(SelectStatement<?> selectStatement, Object result) {
-        proxy.cacheUniqueResult(selectStatement, result);
-    }
-
-    @Override
-    public Optional<Object> uniqueResult(SelectStatement<?> selectStatement) {
-        return proxy.uniqueResult(selectStatement);
-    }
-
-    @Override
     public void enableDefaultCache() {
         proxy.enableDefaultCache();
     }

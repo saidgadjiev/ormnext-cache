@@ -32,11 +32,6 @@ public class SelectStatementCache {
     private final Map<Class<?>, Map<String, Long>> longCache = new ConcurrentHashMap<>();
 
     /**
-     * Unique results cache.
-     */
-    private final Map<Class<?>, Map<String, Object>> uniqueResultCache = new ConcurrentHashMap<>();
-
-    /**
      * Digest helper.
      */
     private final DigestHelper digestHelper;
@@ -132,46 +127,6 @@ public class SelectStatementCache {
     }
 
     /**
-     * Put unique result id to cache.
-     *
-     * @param selectStatement target select statement
-     * @param id              target unique object id
-     */
-    public void putUniqueResult(SelectStatement<?> selectStatement, Object id) {
-        uniqueResultCache.putIfAbsent(selectStatement.getEntityClass(), new ConcurrentHashMap<>());
-
-        uniqueResultCache.get(selectStatement.getEntityClass()).put(digestHelper.digest(selectStatement), id);
-    }
-
-    /**
-     * Retrieve unique object id by statement.
-     *
-     * @param selectStatement target select statement
-     * @return unique object id
-     */
-    public Object getUniqueResult(SelectStatement<?> selectStatement) {
-        Map<String, Object> cache = uniqueResultCache.get(selectStatement.getEntityClass());
-
-        return cache == null ? null : cache.get(digestHelper.digest(selectStatement));
-    }
-
-    /**
-     * Evict unique result by entity type.
-     *
-     * @param entityClass target entity type
-     */
-    public void evictUniqueResult(Class<?> entityClass) {
-        uniqueResultCache.remove(entityClass);
-    }
-
-    /**
-     * Evict all unique results.
-     */
-    public void evictUniqueResult() {
-        uniqueResultCache.clear();
-    }
-
-    /**
      * Put limited result to cache.
      *
      * @param selectStatement target select statement
@@ -220,7 +175,6 @@ public class SelectStatementCache {
         synchronized (this) {
             listCache.remove(entityType);
             longCache.remove(entityType);
-            uniqueResultCache.remove(entityType);
             limitedListCache.remove(entityType);
         }
     }
@@ -232,7 +186,6 @@ public class SelectStatementCache {
         synchronized (this) {
             listCache.clear();
             longCache.clear();
-            uniqueResultCache.clear();
             limitedListCache.clear();
         }
     }
