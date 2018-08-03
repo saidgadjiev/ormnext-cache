@@ -13,6 +13,7 @@ import ru.saidgadjiev.ormnext.core.query.criteria.impl.UpdateStatement;
 import ru.saidgadjiev.ormnext.core.table.internal.metamodel.MetaModel;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Cache layer.
@@ -29,22 +30,22 @@ public class CacheLayer implements Cache {
     /**
      * Object cache map.
      */
-    private Map<Class<?>, ObjectCache> objectCacheMap = new HashMap<>();
+    private Map<Class<?>, ObjectCache> objectCacheMap = new ConcurrentHashMap<>();
 
     /**
      * Query for all results cache.
      */
-    private Map<Class<?>, List<Object>> queryForAllCache = new HashMap<>();
+    private Map<Class<?>, List<Object>> queryForAllCache = new ConcurrentHashMap<>();
 
     /**
      * Count off results cache.
      */
-    private Map<Class<?>, Long> countOffCache = new HashMap<>();
+    private Map<Class<?>, Long> countOffCache = new ConcurrentHashMap<>();
 
     /**
      * Exist results cache.
      */
-    private Map<Class<?>, Map<Object, Boolean>> existCache = new HashMap<>();
+    private final Map<Class<?>, Map<Object, Boolean>> existCache = new ConcurrentHashMap<>();
 
     /**
      * Select statement cache.
@@ -82,12 +83,42 @@ public class CacheLayer implements Cache {
 
     @Override
     public void create(Object object) {
-        putToCache(Collections.singletonList(object));
+        create(Collections.singletonList(object));
     }
 
     @Override
     public void create(Collection<Object> objects) {
-        putToCache(objects);
+        if (objects.isEmpty()) {
+            return;
+        }
+        Class<?> entityType = objects.iterator().next().getClass();
+
+        if (isCacheable(entityType)) {
+            //Очищаем кэши
+
+            //Удаляем кэш для list
+            evictApi().evictList(entityType);
+
+            //Удаляем кэш для запросов с limit offset
+            evictApi().evictLimitedList(entityType);
+
+            //Кэш countOff по таблице
+            evictApi().evictCountOff(entityType);
+
+            //Кэш по long начению по запросу
+            evictApi().evictQueryForLong(entityType);
+
+            //Кэш с SELECT *
+            evictApi().evictQueryForAll(entityType);
+
+            for (Object object : objects) {
+                Object id = extractId(object);
+
+                //Добавляем в exist
+                addToExistCache(entityType, id, true);
+                objectCacheMap.get(entityType).put(entityType, id, object);
+            }
+        }
     }
 
     /**
@@ -101,34 +132,23 @@ public class CacheLayer implements Cache {
             return Collections.emptyList();
         }
         Class<?> entityType = objects.iterator().next().getClass();
+        List<Object> ids = new ArrayList<>();
 
-        if (isCacheable(entityType)) {
-            evictCaches(entityType);
+        for (Object object : objects) {
+            Object id = extractId(object);
 
-            existCache.putIfAbsent(entityType, new HashMap<>());
-            List<Object> ids = new ArrayList<>();
-
-            for (Object object : objects) {
-                Object id = extractId(object);
-
-                ids.add(id);
-                existCache.get(entityType).put(id, true);
-                objectCacheMap.get(entityType).put(entityType, id, object);
-            }
-
-            return ids;
+            ids.add(id);
+            addToExistCache(entityType, id, true);
+            objectCacheMap.get(entityType).put(entityType, id, object);
         }
 
-        return Collections.emptyList();
+        return ids;
     }
 
     @Override
     public void putToCache(Object id, Object data) {
         if (isCacheable(data.getClass())) {
-            evictCaches(data.getClass());
-
-            existCache.putIfAbsent(data.getClass(), new HashMap<>());
-            existCache.get(data.getClass()).put(id, true);
+            addToExistCache(data.getClass(), id, true);
             objectCacheMap.get(data.getClass()).put(data.getClass(), id, data);
         }
     }
@@ -154,7 +174,9 @@ public class CacheLayer implements Cache {
         }
         Class<?> entityType = collection.iterator().next().getClass();
 
-        queryForAllCache.putIfAbsent(entityType, putToCache(collection));
+        if (isCacheable(entityType)) {
+            queryForAllCache.putIfAbsent(entityType, putToCache(collection));
+        }
     }
 
     @Override
@@ -184,27 +206,40 @@ public class CacheLayer implements Cache {
     @Override
     public void update(Object o) {
         if (isCacheable(o.getClass())) {
-            evictApi().evictList(o.getClass());
-            evictApi().evictLimitedList(o.getClass());
-            evictApi().evictQueryForLong(o.getClass());
-            objectCacheMap.get(o.getClass()).put(o.getClass(), extractId(o), o);
+            Class<?> entityType = o.getClass();
+
+            //Очищаем все кеши в selectstatement
+            evictApi().evictList(entityType);
+            evictApi().evictLimitedList(entityType);
+            evictApi().evictQueryForLong(entityType);
+            evictApi().evictUniqueResult(entityType);
+
+            objectCacheMap.get(o.getClass()).put(entityType, extractId(o), o);
         }
     }
 
     @Override
-    public void deleteById(Class<?> tClass, Object id) {
-        if (isCacheable(tClass)) {
-            objectCacheMap.get(tClass).invalidate(tClass, id);
-            evictCaches(tClass);
+    public void deleteById(Class<?> entityType, Object id) {
+        if (isCacheable(entityType)) {
+            //Удаляем запись из кеша объектов
+            evictApi().evict(entityType, id);
 
-            existCache.putIfAbsent(tClass, new HashMap<>());
-            existCache.get(tClass).put(id, false);
+            //Очищаем кеш long результатов
+            evictApi().evictQueryForLong(entityType);
+
+            //Кэш count off
+            evictApi().evictCountOff(entityType);
+
+            //Кэш SELECT *
+            evictApi().evictQueryForAll(entityType);
+
+            addToExistCache(entityType, id, false);
         }
     }
 
     @Override
     public void refresh(Object o) {
-        putToCache(Collections.singleton(o));
+        update(o);
     }
 
     @Override
@@ -241,9 +276,7 @@ public class CacheLayer implements Cache {
     @Override
     public void cacheExist(Class<?> aClass, Object o, Boolean exist) {
         if (isCacheable(aClass)) {
-            existCache.putIfAbsent(aClass, new HashMap<>());
-
-            existCache.get(aClass).put(o, exist);
+            addToExistCache(aClass, extractId(o), exist);
         }
     }
 
@@ -389,16 +422,15 @@ public class CacheLayer implements Cache {
     }
 
     /**
-     * Evict all caches by entity type.
+     * Add object to exist cache.
      *
      * @param entityType target entity type
+     * @param id         target entity id
+     * @param exist      target exist
      */
-    private void evictCaches(Class<?> entityType) {
-        evictApi().evictList(entityType);
-        evictApi().evictLimitedList(entityType);
-        evictApi().evictCountOff(entityType);
-        evictApi().evictQueryForLong(entityType);
-        evictApi().evictQueryForAll(entityType);
+    private void addToExistCache(Class<?> entityType, Object id, boolean exist) {
+        existCache.putIfAbsent(entityType, new ConcurrentHashMap<>());
+        existCache.get(entityType).put(id, exist);
     }
 
     /**

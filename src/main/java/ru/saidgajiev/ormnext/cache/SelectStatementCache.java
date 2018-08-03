@@ -5,7 +5,6 @@ import ru.saidgadjiev.ormnext.core.query.criteria.impl.SelectStatement;
 import ru.saidgadjiev.ormnext.core.table.internal.metamodel.MetaModel;
 import ru.saidgajiev.ormnext.cache.commons.DigestHelper;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,8 +57,8 @@ public class SelectStatementCache {
      * @param selectStatement target select statement
      * @param resultObjectIds target result object ids.
      */
-    public synchronized void putList(SelectStatement<?> selectStatement, List<Object> resultObjectIds) {
-        listCache.putIfAbsent(selectStatement.getEntityClass(), new HashMap<>());
+    public void putList(SelectStatement<?> selectStatement, List<Object> resultObjectIds) {
+        listCache.putIfAbsent(selectStatement.getEntityClass(), new ConcurrentHashMap<>());
 
         listCache.get(selectStatement.getEntityClass()).put(digestHelper.digest(selectStatement), resultObjectIds);
     }
@@ -98,8 +97,8 @@ public class SelectStatementCache {
      * @param selectStatement target select statement
      * @param result          target long result
      */
-    public synchronized void putLong(SelectStatement<?> selectStatement, Long result) {
-        longCache.putIfAbsent(selectStatement.getEntityClass(), new HashMap<>());
+    public void putLong(SelectStatement<?> selectStatement, Long result) {
+        longCache.putIfAbsent(selectStatement.getEntityClass(), new ConcurrentHashMap<>());
 
         longCache.get(selectStatement.getEntityClass()).put(digestHelper.digest(selectStatement), result);
     }
@@ -138,8 +137,8 @@ public class SelectStatementCache {
      * @param selectStatement target select statement
      * @param id              target unique object id
      */
-    public synchronized void putUniqueResult(SelectStatement<?> selectStatement, Object id) {
-        uniqueResultCache.putIfAbsent(selectStatement.getEntityClass(), new HashMap<>());
+    public void putUniqueResult(SelectStatement<?> selectStatement, Object id) {
+        uniqueResultCache.putIfAbsent(selectStatement.getEntityClass(), new ConcurrentHashMap<>());
 
         uniqueResultCache.get(selectStatement.getEntityClass()).put(digestHelper.digest(selectStatement), id);
     }
@@ -179,7 +178,7 @@ public class SelectStatementCache {
      * @param list            target limited result ids
      */
     public void putLimitedList(SelectStatement<?> selectStatement, List<Object> list) {
-        limitedListCache.putIfAbsent(selectStatement.getEntityClass(), new HashMap<>());
+        limitedListCache.putIfAbsent(selectStatement.getEntityClass(), new ConcurrentHashMap<>());
 
         limitedListCache.get(selectStatement.getEntityClass()).put(digestHelper.digest(selectStatement), list);
     }
@@ -218,19 +217,23 @@ public class SelectStatementCache {
      * @param entityType target entity type
      */
     public void evictAll(Class<?> entityType) {
-        listCache.remove(entityType);
-        longCache.remove(entityType);
-        uniqueResultCache.remove(entityType);
-        limitedListCache.remove(entityType);
+        synchronized (this) {
+            listCache.remove(entityType);
+            longCache.remove(entityType);
+            uniqueResultCache.remove(entityType);
+            limitedListCache.remove(entityType);
+        }
     }
 
     /**
      * Evict all caches.
      */
     public void flush() {
-        listCache.clear();
-        longCache.clear();
-        uniqueResultCache.clear();
-        limitedListCache.clear();
+        synchronized (this) {
+            listCache.clear();
+            longCache.clear();
+            uniqueResultCache.clear();
+            limitedListCache.clear();
+        }
     }
 }
