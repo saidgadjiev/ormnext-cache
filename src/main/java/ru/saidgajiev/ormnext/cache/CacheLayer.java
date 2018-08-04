@@ -344,9 +344,9 @@ public class CacheLayer implements Cache {
 
     @Override
     public void enableDefaultCache() {
-        ObjectCache objectCache = new ReferenceObjectCache();
-
         for (Class<?> entityType : cacheableEntities) {
+            ObjectCache objectCache = new ReferenceObjectCache();
+
             objectCache.registerClass(entityType);
             objectCacheMap.put(entityType, objectCache);
         }
