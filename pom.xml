@@ -280,7 +280,7 @@
         <dependency>
             <groupId>ru.saidgadjiev.ormnext</groupId>
             <artifactId>ormnext-core</artifactId>
-            <version>1.13-SNAPSHOT</version>
+            <version>1.13</version>
         </dependency>
 
         <dependency>
